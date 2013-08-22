@@ -1,0 +1,38 @@
+INFO  2013-07-03 23:03:55,533 (Saros.java:260) Starting Saros 13.3.22 running:
+  Java Version: 1.7.0_25
+  Java Vendor: Oracle Corporation
+  Eclipse Runtime Version: 3.8.0.v20120912-155025
+  Operating System: Windows 7 (6.1)
+  Hardware Architecture: x86
+DEBUG 2013-07-03 23:03:55,563 (DataTransferManager.java:451) used transport order for the current XMPP connection: [XEP 65 SOCKS5, XEP 47 In-Band Bytestream]
+INFO  2013-07-03 23:03:55,586 (XMPPAccountStore.java:103) loaded 1 accounts
+DEBUG 2013-07-03 23:03:55,636 (StreamServiceManager.java:226) StreamServices added:
+  VideoSharing
+  SendFile
+  AudioService
+DEBUG 2013-07-03 23:03:55,696 (SarosAnnotation.java:216) set color values [c:RGB {141, 206, 231}|s:RGB {183, 224, 240}|v:RGB {141, 206, 231}] for color id: 0
+DEBUG 2013-07-03 23:03:55,722 (SarosAnnotation.java:216) set color values [c:RGB {191, 187, 130}|s:RGB {208, 205, 164}|v:RGB {191, 187, 130}] for color id: 1
+DEBUG 2013-07-03 23:03:55,722 (SarosAnnotation.java:216) set color values [c:RGB {186, 220, 81}|s:RGB {220, 237, 166}|v:RGB {186, 220, 81}] for color id: 2
+DEBUG 2013-07-03 23:03:55,723 (SarosAnnotation.java:216) set color values [c:RGB {237, 237, 169}|s:RGB {246, 246, 211}|v:RGB {237, 237, 169}] for color id: 3
+DEBUG 2013-07-03 23:03:55,723 (SarosAnnotation.java:216) set color values [c:RGB {137, 180, 178}|s:RGB {184, 210, 209}|v:RGB {137, 180, 178}] for color id: 4
+DEBUG 2013-07-03 23:03:55,724 (SarosAnnotation.java:216) set color values [c:RGB {128, 128, 128}|s:RGB {128, 128, 128}|v:RGB {128, 128, 128}] for color id: 5
+WARN  2013-07-03 23:03:55,984 (NullSarosSession.java:66) unexpected method call
+WARN  2013-07-03 23:03:55,991 (NullSarosSession.java:66) unexpected method call
+DEBUG 2013-07-03 23:03:56,108 (SarosNet.java:224) Socks5Proxy properties changed. Socks5Proxy started on port 7777...
+DEBUG 2013-07-03 23:03:56,109 (UPnPServiceImpl.java:294) Waiting for UPnP discovery to complete...
+DEBUG 2013-07-03 23:03:56,750 (StunServiceImpl.java:170) discovered public WAN-IP: 173.238.211.95 through interface 192.168.0.108
+DEBUG 2013-07-03 23:03:56,751 (StunServiceImpl.java:170) discovered public WAN-IP: 173.238.211.95 through interface 192.168.0.107
+DEBUG 2013-07-03 23:03:58,052 (SharedDocumentProvider.java:79) SharedDocumentProvider created by Eclipse
+DEBUG 2013-07-03 23:04:00,198 (UPnPServiceImpl.java:209) 1 gateway(s) discovered.
+DEBUG 2013-07-03 23:04:00,432 (SarosNet.java:440) New Connection State == CONNECTING
+DEBUG 2013-07-03 23:04:01,316 (WhiteboardManager.java:108) WhiteboardManager instantiated
+DEBUG 2013-07-03 23:04:01,328 (DocumentRecord.java:93) Added Node: attr(13729070413267395) name=svg
+DEBUG 2013-07-03 23:04:03,525 (StunServiceImpl.java:170) discovered public WAN-IP: 173.238.211.95 through interface 192.168.0.107
+DEBUG 2013-07-03 23:04:03,527 (StunServiceImpl.java:170) discovered public WAN-IP: 173.238.211.95 through interface 192.168.0.108
+DEBUG 2013-07-03 23:04:03,649 (SarosNet.java:440) [irockrs10@gmail.com/SarosDBCDC25C] New Connection State == CONNECTED
+DEBUG 2013-07-03 23:04:03,650 (DataTransferManager.java:451) used transport order for the current XMPP connection: [XEP 65 SOCKS5, XEP 47 In-Band Bytestream]
+DEBUG 2013-07-03 23:04:03,651 (SkypeManager.java:286) Refreshing Skype username cache...
+WARN  2013-07-03 23:06:57,168 (NullSarosSession.java:66) unexpected method call
+WARN  2013-07-03 23:06:57,173 (NullSarosSession.java:66) unexpected method call
+DEBUG 2013-07-03 23:06:57,373 (SarosNet.java:440) [irockrs10@gmail.com/SarosDBCDC25C] New Connection State == DISCONNECTING
+DEBUG 2013-07-03 23:06:57,532 (SarosNet.java:440) New Connection State == NOT_CONNECTED

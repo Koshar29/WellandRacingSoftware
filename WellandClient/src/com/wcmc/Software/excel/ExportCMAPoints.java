@@ -1,0 +1,238 @@
+package com.wcmc.Software.excel;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+import net.matthewauld.controls.welland.ClassItem;
+import net.matthewauld.racetrack.constants.CONST;
+import jxl.Workbook;
+import jxl.format.Alignment;
+import jxl.format.Border;
+import jxl.format.BorderLineStyle;
+import jxl.format.Colour;
+import jxl.format.VerticalAlignment;
+import jxl.write.DateFormat;
+import jxl.write.Label;
+import jxl.write.Number;
+import jxl.write.WritableCellFormat;
+import jxl.write.WritableFont;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
+
+import com.smartxls.WorkBook;
+import com.wcmc.Software.Client;
+
+public class ExportCMAPoints extends Thread {
+	private WritableCellFormat headerGrey = new WritableCellFormat(), headerBold = new WritableCellFormat(), pointsBold = new WritableCellFormat(), dataCenter = new WritableCellFormat(), dataWrapped = new WritableCellFormat();
+	private WritableFont arial10bold = new WritableFont(WritableFont.ARIAL, 10, WritableFont.BOLD);
+
+	public ExportCMAPoints() {
+		try {
+			headerGrey.setAlignment(Alignment.CENTRE);
+			headerGrey.setBackground(Colour.GRAY_25);
+			headerBold.setAlignment(Alignment.CENTRE);
+			headerBold.setVerticalAlignment(VerticalAlignment.CENTRE);
+			headerBold.setFont(arial10bold);
+			headerBold.setBorder(Border.ALL, BorderLineStyle.THICK);
+			pointsBold.setAlignment(Alignment.CENTRE);
+			pointsBold.setVerticalAlignment(VerticalAlignment.CENTRE);
+			pointsBold.setBorder(Border.ALL, BorderLineStyle.THIN);
+			pointsBold.setFont(arial10bold);
+
+			dataCenter.setAlignment(Alignment.CENTRE);
+			dataCenter.setVerticalAlignment(VerticalAlignment.CENTRE);
+			dataCenter.setBorder(Border.ALL, BorderLineStyle.THIN);
+
+			dataWrapped.setAlignment(Alignment.CENTRE);
+			dataWrapped.setVerticalAlignment(VerticalAlignment.CENTRE);
+			dataWrapped.setBorder(Border.ALL, BorderLineStyle.THIN);
+			dataWrapped.setWrap(true);
+		} catch (WriteException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void run() {
+
+		Date now = new Date();
+
+		SimpleDateFormat date = new SimpleDateFormat("yyyy");
+
+		String year = date.format(now);
+
+		JFileChooser saveAs = new JFileChooser(System.getProperty("user.home"));
+		saveAs.setDialogTitle("Save Standings For The " + year + " Season");
+		saveAs.setFileFilter(new FileNameExtensionFilter("Excel 2003 (*.xls)", "xls"));
+		if (saveAs.showSaveDialog(Client.window) == JFileChooser.APPROVE_OPTION) {
+			File exportFile = null;
+			if (!saveAs.getSelectedFile().toString().endsWith(".xls")) {
+				exportFile = new File(saveAs.getSelectedFile().getAbsolutePath() + ".xls");
+			} else {
+				exportFile = saveAs.getSelectedFile();
+			}
+
+			try {
+				WritableWorkbook excelFile = Workbook.createWorkbook(exportFile);
+				System.out.println("Exporting Standings...");
+				int sheetNumber = 0;
+				ArrayList<ClassItem> classes = Client.ms.rS.classes.getClasses();
+
+				Client.ms.trS.prgExport.setVisible(true);
+				Client.ms.trS.prgExport.setPercent(0);
+				Client.ms.trS.prgClass.setVisible(true);
+				Client.ms.trS.prgClass.setPercent(0);
+				Client.ms.trS.overall.setVisible(true);
+				Client.ms.trS.classSpecific.setVisible(true);
+				for (int i = 0; i < classes.size(); i++) {
+					ClassItem c = classes.get(i);
+					Client.ms.trS.classSpecific.setText("Class: " + c.getText());
+					WritableSheet classSheet = excelFile.createSheet(c.getText().toString(), sheetNumber);
+					classSheet.mergeCells(1, 1, 13, 1);
+					classSheet.addCell(new Label(1, 1, c.getText().toString() + " - Niagara Motorcycle Raceway - " + year + " Season", headerGrey));
+					classSheet.addCell(new Label(1, 3, "Plate #", headerBold));
+					classSheet.addCell(new Label(2, 3, "CMA", headerBold));
+					classSheet.addCell(new Label(3, 3, "First Name", headerBold));
+					classSheet.addCell(new Label(4, 3, "Last Name", headerBold));
+					classSheet.addCell(new Label(5, 3, "Total Points", headerBold));
+					Client.sc.send(CONST.GET_RACE_DATES + " " + year + CONST.seperator + c.getID());
+					String jsonData = null;
+					while ((jsonData = Client.sc.getInfo()) == null) {
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					if (jsonData != null) {
+
+						JSONParser parse = new JSONParser();
+						JSONObject jsonDates = (JSONObject) parse.parse(jsonData);
+						if (jsonDates != null) {
+							JSONArray jsonDatesArray = (JSONArray) jsonDates.get("dates");
+							JSONArray riderDataArray = (JSONArray) jsonDates.get("riders");
+							if (riderDataArray.size() == 0) {
+								excelFile.removeSheet(sheetNumber);
+								continue;
+							}
+							for (int d = 0; d < jsonDatesArray.size(); d++) {
+								String dateString = (String) jsonDatesArray.get(d);
+								classSheet.mergeCells(6 + (d * 2), 3, 6 + (d * 2) + 1, 3);
+
+								DateFormat customDateFormat = new DateFormat("MMMM dd");
+								WritableCellFormat dateFormat = new WritableCellFormat(customDateFormat);
+								dateFormat.setBorder(Border.ALL, BorderLineStyle.THICK);
+								dateFormat.setAlignment(Alignment.CENTRE);
+								dateFormat.setFont(arial10bold);
+								SimpleDateFormat dateParser = new SimpleDateFormat("yyyy-M-d");
+
+								Date eventDate = dateParser.parse(dateString);
+
+								jxl.write.DateTime dateFormatCell = new jxl.write.DateTime(6 + (d * 2), 3, eventDate, dateFormat);
+
+								classSheet.addCell(dateFormatCell);
+								classSheet.addCell(new Label(6 + (d * 2), 5, "POS", dataCenter));
+								classSheet.addCell(new Label(6 + (d * 2) + 1, 5, "Points", dataCenter));
+								classSheet.setColumnView(6 + (d * 2), 10);
+								classSheet.setColumnView(6 + (d * 2) + 1, 10);
+
+							}
+
+							classSheet.addCell(new Label(6 + jsonDatesArray.size() * 2, 3, "City", headerBold));
+							classSheet.addCell(new Label(7 + jsonDatesArray.size() * 2, 3, "Sponsors", headerBold));
+							classSheet.setColumnView(6 + jsonDatesArray.size() * 2, 25);
+							classSheet.setColumnView(7 + jsonDatesArray.size() * 2, 75);
+
+							for (int r = 0; r < riderDataArray.size(); r++) {
+								JSONObject rider = (JSONObject) riderDataArray.get(r);
+								JSONObject bike = (JSONObject) rider.get("bike");
+								if (bike != null) {
+									classSheet.addCell(new Number(1, 6 + r, (long) bike.get("plate"), pointsBold));
+								}
+								classSheet.addCell(new Label(2, 6 + r, (String) rider.get("license"), pointsBold));
+								classSheet.addCell(new Label(3, 6 + r, (String) rider.get("first_name"), dataCenter));
+								classSheet.addCell(new Label(4, 6 + r, (String) rider.get("last_name"), dataCenter));
+								classSheet.addCell(new Number(5, 6 + r, (long) rider.get("totalPoints"), pointsBold));
+
+								JSONArray events = (JSONArray) rider.get("events");
+								boolean hasEvent = false;
+								for (int d = 0; d < jsonDatesArray.size(); d++) {
+									hasEvent = false;
+									for (int e = 0; e < events.size(); e++) {
+										String dateString = (String) jsonDatesArray.get(d);
+										JSONObject event = (JSONObject) events.get(e);
+										if (event.get("date").equals(dateString)) {
+											classSheet.addCell(new Number(6 + (d * 2), 6 + r, (long) event.get("position"), dataCenter));
+											classSheet.addCell(new Number(6 + (d * 2) + 1, 6 + r, (long) event.get("points"), dataCenter));
+											hasEvent = true;
+										}
+									}
+									if (!hasEvent) {
+										classSheet.addCell(new Label(6 + (d * 2), 6 + r, "", dataCenter));
+										classSheet.addCell(new Label(6 + (d * 2) + 1, 6 + r, "", dataCenter));
+									}
+								}
+								classSheet.addCell(new Label(6 + (jsonDatesArray.size() * 2), 6 + r, (String) rider.get("city"), dataCenter));
+								classSheet.addCell(new Label(7 + (jsonDatesArray.size() * 2), 6 + r, (String) rider.get("sponsors"), dataWrapped));
+								Client.ms.trS.prgClass.setPercent(((double) r / (double) riderDataArray.size()) * 100);
+							}
+						}
+					}
+
+					// Set Widths
+					classSheet.setRowView(3, 300);
+
+					classSheet.setColumnView(1, 10);
+					classSheet.setColumnView(2, 10);
+					classSheet.setColumnView(3, 18);
+					classSheet.setColumnView(4, 18);
+					classSheet.setColumnView(5, 15);
+					sheetNumber++;
+
+					Client.ms.trS.prgExport.setPercent(((double) i / (double) Client.ms.rS.classes.getClasses().size()) * 100);
+				}
+				excelFile.write();
+				excelFile.close();
+
+				WorkBook sortedWorkbook = new WorkBook();
+				try {
+					sortedWorkbook.read(new FileInputStream(exportFile));
+					for (int i = 0; i < sheetNumber; i++) {
+						sortedWorkbook.setSheet(i);
+						sortedWorkbook.sort(6, 1, 60, 60, true, -5, 0, 0);
+					}
+					sortedWorkbook.setSheet(0);
+					FileOutputStream out = new FileOutputStream(exportFile);
+					sortedWorkbook.write(out);
+					out.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				Client.ms.trS.prgExport.setVisible(false);
+				Client.ms.trS.prgClass.setVisible(false);
+				Client.ms.trS.overall.setVisible(false);
+				Client.ms.trS.classSpecific.setVisible(false);
+			} catch (IOException | WriteException | ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (java.text.ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+}

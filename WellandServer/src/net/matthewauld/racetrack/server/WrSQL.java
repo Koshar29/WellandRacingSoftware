@@ -1,0 +1,394 @@
+package net.matthewauld.racetrack.server;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+public class WrSQL {
+	private Connection con = null;
+	private Statement st = null;
+	private ResultSet rs = null;
+	private PreparedStatement ps = null;
+
+	private String url = "jdbc:mysql://127.0.0.1:3306/racetrack2013?allowMultiQueries=true";
+	private String user = "root";
+	private String password = "";
+
+	public WrSQL() {
+
+	}
+
+	public void connect() throws SQLException {
+		con = DriverManager.getConnection(url, user, password);
+	}
+
+	@SuppressWarnings("unchecked")
+	public String getJSONClassSpecificRiders(String query, String classID) throws SQLException {
+		connect();
+		st = con.createStatement();
+		rs = st.executeQuery(query);
+
+		JSONObject json = new JSONObject();
+		JSONArray riders = new JSONArray();
+		while (rs.next()) {
+			JSONObject classJSON = new JSONObject();
+			classJSON.put("name", fetchRiderName(rs.getInt("id")));
+			classJSON.put("id", rs.getInt("id"));
+			riders.add(classJSON);
+		}
+
+		JSONObject classInfo = new JSONObject();
+		classInfo.put("title", fetchClassTitle(Integer.parseInt(classID)));
+		classInfo.put("cid", Integer.parseInt(classID));
+		json.put("class", classInfo);
+
+		if (riders.size() == 0) {
+			json.put("riders", null);
+		} else {
+			json.put("riders", riders);
+		}
+
+		return json.toJSONString();
+	}
+
+	private String fetchClassTitle(int cid) throws SQLException {
+		PreparedStatement ps = con.prepareStatement("SELECT title FROM classes WHERE id = ?");
+		ps.setInt(1, cid);
+
+		ResultSet rs = ps.executeQuery();
+		String classTitle = "";
+		if (rs.next()) {
+			classTitle = rs.getString("title");
+		}
+		return classTitle;
+	}
+
+	private String fetchRiderName(int rid) throws SQLException {
+		PreparedStatement ps = con.prepareStatement("SELECT first_name,last_name FROM riders WHERE id = ?");
+		ps.setInt(1, rid);
+
+		ResultSet rs = ps.executeQuery();
+		String riderName = "";
+		if (rs.next()) {
+			riderName = rs.getString("first_name") + " " + rs.getString("last_name");
+		}
+		return riderName;
+
+	}
+
+	@SuppressWarnings("unchecked")
+	public String getJSONClasses(String query) throws SQLException {
+		connect();
+		st = con.createStatement();
+		rs = st.executeQuery(query);
+
+		JSONObject json = new JSONObject();
+		JSONArray classes = new JSONArray();
+		while (rs.next()) {
+			JSONObject classJSON = new JSONObject();
+			classJSON.put("id", rs.getInt("id"));
+			classJSON.put("title", rs.getString("title"));
+			classes.add(classJSON);
+		}
+
+		if (classes.size() == 0) {
+			json.put("classes", null);
+		} else {
+			json.put("classes", classes);
+		}
+
+		return json.toJSONString();
+	}
+
+	@SuppressWarnings("unchecked")
+	public String getJSONString(String query, String[] args) throws SQLException {
+		connect();
+		ps = con.prepareStatement(query);
+		for (int i = 0; i < args.length; i++) {
+			ps.setString(i + 1, args[i]);
+		}
+
+		rs = ps.executeQuery();
+		JSONObject json = new JSONObject();
+		JSONArray riders = new JSONArray();
+		while (rs.next()) {
+			JSONObject riderJSON = new JSONObject();
+			riderJSON.put("id", rs.getInt("id"));
+			riderJSON.put("first_name", rs.getString("first_name"));
+			riderJSON.put("last_name", rs.getString("last_name"));
+			riders.add(riderJSON);
+		}
+		if (riders.size() == 0) {
+			json.put("riders", null);
+		} else {
+			json.put("riders", riders);
+		}
+
+		return json.toJSONString();
+	}
+
+	public String fetchQuery(String query) {
+		try {
+			connect();
+			st = con.createStatement();
+			rs = st.executeQuery(query);
+			if (rs.next()) {
+
+				return rs.getString(1);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public void disconnect() {
+		try {
+			st.close();
+			rs.close();
+			con.close();
+		} catch (Exception e) {
+			// Nothing To See Here
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public String getRiderInfo(int rid) {
+		JSONObject json = new JSONObject();
+		try {
+			connect();
+			PreparedStatement ps = con.prepareStatement("SELECT * FROM riders WHERE id = ?");
+			ps.setInt(1, rid);
+
+			ResultSet rs = ps.executeQuery();
+
+			if (rs.next()) {
+				json.put("id", rid);
+				json.put("first_name", rs.getString("first_name"));
+				json.put("middle_name", rs.getString("middle_name"));
+				json.put("last_name", rs.getString("last_name"));
+				json.put("address", rs.getString("address"));
+				json.put("home_phone", rs.getString("home_phone"));
+				json.put("cell_phone", rs.getString("cell_phone"));
+				json.put("email", rs.getString("email"));
+				json.put("license", rs.getString("license"));
+				ps = con.prepareStatement("SELECT * FROM cities WHERE id = ?");
+				ps.setInt(1, rs.getInt("city_id"));
+				ResultSet city_info = ps.executeQuery();
+				String city_text = "";
+				String state_text = "";
+				String country_text = "";
+				if (city_info.next()) {
+					city_text = city_info.getString("city");
+					state_text = city_info.getString("state");
+					country_text = city_info.getString("country_code");
+				}
+
+				json.put("city", city_text);
+				json.put("state", state_text);
+				json.put("country", country_text);
+
+				JSONArray classes = new JSONArray();
+
+				ps = con.prepareStatement("SELECT * FROM ridersclasses WHERE rid = ?");
+				ps.setInt(1, rid);
+				rs = ps.executeQuery();
+				while (rs.next()) {
+					JSONObject classInfo = new JSONObject();
+					classInfo.put("id", rs.getInt("cid"));
+
+					ps = con.prepareStatement("SELECT * FROM classes WHERE id = ?");
+					ps.setInt(1, rs.getInt("cid"));
+
+					ResultSet classSet = ps.executeQuery();
+					if (classSet.next()) {
+						classInfo.put("title", classSet.getString("title"));
+					}
+
+					ps = con.prepareStatement("SELECT * FROM attendance WHERE rid = ? AND cid = ? AND bike_number = ?");
+					ps.setInt(1, rid);
+					ps.setInt(2, rs.getInt("cid"));
+					ps.setInt(3, rs.getInt("bike_number"));
+
+					ResultSet check = ps.executeQuery();
+					boolean isHere = false;
+					if (check.next()) {
+						isHere = true;
+					}
+					classInfo.put("signed_in", isHere);
+					classInfo.put("bike_number", rs.getInt("bike_number"));
+					classInfo.put("bike_brand", rs.getString("bike_brand"));
+					classes.add(classInfo);
+				}
+				json.put("classes", classes);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return json.toJSONString();
+	}
+
+	public void signInRider(int rid, int cid, int bike_number) {
+		try {
+			connect();
+
+			ps = con.prepareStatement("INSERT INTO attendance (rid,cid,bike_number) VALUES (?,?,?)");
+			ps.setInt(1, rid);
+			ps.setInt(2, cid);
+			ps.setInt(3, bike_number);
+
+			ps.executeUpdate();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void signOutRider(int rid, int cid, int bike_number) {
+		try {
+			connect();
+			ps = con.prepareStatement("DELETE FROM attendance WHERE rid = ? AND cid = ? AND bike_number = ?");
+			ps.setInt(1, rid);
+			ps.setInt(2, cid);
+			ps.setInt(3, bike_number);
+
+			ps.executeUpdate();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public String getClassStandings(int classID, String date) {
+		try {
+			connect();
+			ps = con.prepareStatement("SELECT * FROM wcmcpoints WHERE cid = ? AND date = ? ORDER BY position ASC");
+			ps.setInt(1, classID);
+			ps.setString(2, date);
+
+			rs = ps.executeQuery();
+			JSONObject json = new JSONObject();
+			JSONArray riders = new JSONArray();
+			while (rs.next()) {
+				ps = con.prepareStatement("SELECT * FROM riders WHERE id = ?");
+				ps.setInt(1, rs.getInt("rid"));
+				ResultSet riderInfo = ps.executeQuery();
+
+				if (riderInfo.next()) {
+					JSONObject rider = new JSONObject();
+
+					ps = con.prepareStatement("SELECT * FROM ridersclasses WHERE rid = ? AND cid = ?");
+					ps.setInt(1, rs.getInt("rid"));
+					ps.setInt(2, classID);
+					ResultSet bikeInfo = ps.executeQuery();
+					if (bikeInfo.next()) {
+						String middle = "";
+						if (riderInfo.getString("middle_name") != null && riderInfo.getString("middle_name") != "") {
+							middle = "\"" + riderInfo.getString("middle_name") + "\" ";
+						}
+
+						rider.put("name", riderInfo.getString("first_name") + " " + middle + riderInfo.getString("last_name"));
+						rider.put("bike_number", bikeInfo.getInt("bike_number"));
+						rider.put("hometown", riderInfo.getString("city_text"));
+
+						riders.add(rider);
+					}
+				}
+			}
+			json.put("riders", riders);
+			return json.toJSONString();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	@SuppressWarnings("unchecked")
+	public String getRaceDates(String year, int classID) {
+		try {
+			connect();
+			st = con.createStatement();
+			rs = st.executeQuery("SELECT `date` FROM `wcmcpoints` WHERE `date` LIKE '" + year + "%' AND `isCMA` = '1' GROUP BY `date`");
+			JSONObject json = new JSONObject();
+			JSONArray dates = new JSONArray();
+			while (rs.next()) {
+				dates.add(rs.getString("date"));
+			}
+			json.put("dates", dates);
+
+			// Rider Information
+			JSONArray riders = new JSONArray();
+
+			st = con.createStatement();
+			rs = st.executeQuery("SELECT `rid` FROM `wcmcpoints` WHERE `isCMA` = '1' AND `cid` = '" + classID + "' GROUP BY `rid`");
+
+			while (rs.next()) {
+				JSONObject riderInfo = new JSONObject();
+
+				Statement pointsSumQuery = con.createStatement();
+				ResultSet points = pointsSumQuery.executeQuery("SELECT SUM(points) FROM `wcmcpoints` WHERE `isCMA` = '1' AND `rid` = '" + rs.getInt("rid") + "' AND `cid` = '" + classID + "'");
+				if (points.next()) {
+					riderInfo.put("totalPoints", points.getInt("SUM(points)"));
+				}
+				riderInfo.put("id", rs.getInt("rid"));
+
+				Statement riderQuery = con.createStatement();
+				ResultSet riderDetails = riderQuery.executeQuery("SELECT * FROM `riders` WHERE `id` = '" + rs.getInt("rid") + "'");
+				if (riderDetails.next()) {
+					riderInfo.put("first_name", riderDetails.getString("first_name"));
+					riderInfo.put("last_name", riderDetails.getString("last_name"));
+					riderInfo.put("license", riderDetails.getString("license"));
+					riderInfo.put("city", riderDetails.getString("city_text"));
+					riderInfo.put("sponsors", riderDetails.getString("sponsors_old"));
+
+					Statement classQuery = con.createStatement();
+					ResultSet classDetails = classQuery.executeQuery("SELECT * FROM `ridersclasses` WHERE `rid` = '" + riderDetails.getInt("id") + "' AND `cid` = '" + classID + "'");
+
+					if (classDetails.next()) {
+						JSONObject bike = new JSONObject();
+						bike.put("plate", classDetails.getInt("bike_number"));
+						bike.put("brand", classDetails.getString("bike_brand"));
+						riderInfo.put("bike", bike);
+					} else {
+						riderInfo.put("bike", null);
+					}
+
+					classDetails = classQuery.executeQuery("SELECT * FROM `wcmcpoints` WHERE `rid` = '" + riderDetails.getInt("id") + "' AND `cid` = '" + classID + "' AND `isCMA` = '1'");
+
+					JSONArray events = new JSONArray();
+
+					while (classDetails.next()) {
+						JSONObject event = new JSONObject();
+						event.put("date", classDetails.getString("date"));
+						event.put("position", classDetails.getInt("position"));
+						event.put("points", classDetails.getInt("points"));
+						events.add(event);
+
+					}
+					riderInfo.put("events", events);
+
+					riders.add(riderInfo);
+				}
+
+			}
+
+			json.put("riders", riders);
+
+			return json.toJSONString();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+}

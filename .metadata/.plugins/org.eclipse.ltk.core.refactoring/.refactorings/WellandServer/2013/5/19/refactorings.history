@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Move package &apos;net.matthewauld.racetrack.server.constants&apos; to &apos;SharedVariables/src&apos;&#x0D;&#x0A;- Original project: &apos;WellandServer&apos;&#x0D;&#x0A;- Destination element: &apos;SharedVariables/src&apos;&#x0D;&#x0A;- Original element: &apos;WellandServer/src/net.matthewauld.racetrack.server.constants&apos;&#x0D;&#x0A;- Update references to refactored element" description="Move package" destination="=SharedVariables/src" element1="/src&lt;net.matthewauld.racetrack.server.constants" flags="589830" fragments="1" id="org.eclipse.jdt.ui.move" policy="org.eclipse.jdt.ui.movePackages" stamp="1367885150127" version="1.0"/>
+</session>

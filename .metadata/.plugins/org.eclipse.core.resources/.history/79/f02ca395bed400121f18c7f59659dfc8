@@ -1,0 +1,154 @@
+package net.matthewauld.racetrack.server;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.net.SocketException;
+import java.sql.SQLException;
+
+import net.matthewauld.racetrack.constants.CONST;
+
+public class ClientListener extends Thread {
+	private Socket clientSocket;
+	private PrintWriter out;
+	private BufferedReader in;
+	private int localport, id;
+	private String displayName = "";
+
+	public ClientListener(Socket cs) {
+		this.clientSocket = cs;
+		try {
+			this.clientSocket.setKeepAlive(true);
+		} catch (SocketException e1) {
+
+		}
+		this.localport = cs.getPort();
+		try {
+			out = new PrintWriter(clientSocket.getOutputStream());
+			in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+		} catch (IOException e) {
+
+		}
+
+	}
+
+	@Override
+	public void run() {
+		try {
+			String line;
+			while ((line = in.readLine()) != null) {
+				parseCommand(line);
+			}
+		} catch (IOException e) {
+			Server.sendToAll(CONST.DISCONNECT + " " + this.localport);
+			System.out.println("Client " + this.localport + " has disconnected");
+			Server.clients.remove(this);
+			Server.sendToAll(CONST.COUNT_UPDATE + " " + Server.clients.size());
+
+		}
+	}
+
+	public void parseCommand(String command) {
+		String sql = "";
+		WrSQL wSQL = null;
+		int code = -1;
+		if (command.contains(" ")) {
+			code = Integer.parseInt(command.substring(0, command.indexOf(" ")));
+		} else {
+			code = Integer.parseInt(command);
+		}
+		System.out.println("IN: " + command);
+		switch (code) {
+		case CONST.LOGIN:
+			String[] strings = (String[]) getArgs(command.substring(command.indexOf(" ") + 1));
+			if (strings.length == 2) {
+				String username = strings[0];
+				String password = strings[1];
+				checkLogin(username, password);
+			}
+			// System.out.println(command);
+			break;
+		case CONST.RIDER_DATA_SEARCH:
+			if (command.contains(CONST.seperator)) {
+				@SuppressWarnings("unused")
+				String[] args = (String[]) getArgs(command);
+			} else {
+				String args = (String) getArgs(command);
+				sql = "SELECT * FROM riders WHERE first_name LIKE ? OR last_name LIKE ?";
+				wSQL = new WrSQL();
+				String[] sArgs = { args + "%", args + "%" };
+				String riderData = "NULL";
+				try {
+					riderData = wSQL.getJSONString(sql, sArgs);
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+				send(CONST.RIDER_DATA_SEARCH + " " + riderData);
+			}
+			break;
+		case CONST.CLASSES_DATA_SEARCH:
+			sql = "SELECT * FROM classes WHERE `active` = '1'";
+			wSQL = new WrSQL();
+			String classData = "NULL";
+			try {
+				classData = wSQL.getJSONClasses(sql);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+
+			send(CONST.CLASSES_DATA_SEARCH + " " + classData);
+			break;
+		case CONST.GET_CLASS_RIDERS:
+			String arg = (String) getArgs(command);
+			sql = "SELECT * FROM riders AS rides WHERE EXISTS(SELECT * FROM ridersclasses AS rideClass WHERE rideClass.rid = rides.id AND cid = '" + arg + "') ORDER BY first_name ASC";
+			//sql = "SELECT * FROM riders WHERE ID IN (SELECT rid FROM ridersclasses WHERE CID = '6') ORDER BY first_name ASC";
+			System.out.println(sql);
+			wSQL = new WrSQL();
+			String classRidersData = "NULL";
+			try {
+				classRidersData = wSQL.getJSONClassSpecificRiders(sql);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			send(CONST.GET_CLASS_RIDERS + " " + classRidersData);
+			break;
+		}
+	}
+
+	private Object getArgs(String command) {
+		String arg = command.substring(command.indexOf(" ") + 1);
+		if (arg.contains(CONST.seperator)) {
+			String[] args = arg.split(CONST.seperator);
+			return args;
+		} else {
+			return arg;
+		}
+	}
+
+	public void send(Object line) {
+		if (clientSocket.isConnected() && out != null && line != null) {
+			out.println(line.toString());
+			out.flush();
+		}
+	}
+
+	public String getDisplayName() {
+		return this.displayName;
+	}
+
+	private void checkLogin(String username, String password) {
+		System.out.println("Verifying Login: " + username + " - " + password);
+		WrSQL wSQL = new WrSQL();
+		String results = wSQL.fetchQuery("SELECT `id` FROM `accounts` WHERE `username` = '" + username + "' AND `password` = '" + password + "'");
+		// System.out.println(results);
+		if (results == null) {
+			send(CONST.LOGIN + " 0" + CONST.seperator + "Invalid Login");
+		} else {
+			this.id = Integer.parseInt(results);
+			send(CONST.LOGIN + " " + this.id);
+		}
+		wSQL.disconnect();
+	}
+}

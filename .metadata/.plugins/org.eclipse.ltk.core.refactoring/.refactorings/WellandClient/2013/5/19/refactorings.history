@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Move element &apos;CONST.java&apos; to &apos;WellandServer/src/net.matthewauld.racetrack.server.constants&apos;&#x0D;&#x0A;- Original project: &apos;WellandClient&apos;&#x0D;&#x0A;- Destination element: &apos;WellandServer/src/net.matthewauld.racetrack.server.constants&apos;&#x0D;&#x0A;- Original element: &apos;com.wcmc.Software.CONST.java&apos;&#x0D;&#x0A;- Update references to refactored element" description="Move compilation unit" destination="=WellandServer/src&lt;net.matthewauld.racetrack.server.constants" element1="/src&lt;com.wcmc.Software{CONST.java" files="0" flags="589830" folders="0" id="org.eclipse.jdt.ui.move" patterns="*" policy="org.eclipse.jdt.ui.moveResources" qualified="false" references="true" stamp="1367883623095" units="1" version="1.0"/>
+</session>

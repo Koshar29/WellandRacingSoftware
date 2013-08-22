@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring accessors="true" comment="Delete element from project &apos;WellandClient&apos;&#x0D;&#x0A;- Original project: &apos;WellandClient&apos;&#x0D;&#x0A;- Original element: &apos;com.wcmc.Software.RiderComplete.java&apos;" description="Delete element" element1="/src&lt;com.wcmc.Software{RiderComplete.java" elements="1" flags="589830" id="org.eclipse.jdt.ui.delete" resources="0" stamp="1370734150254" subPackages="false" version="1.0"/>
+</session>

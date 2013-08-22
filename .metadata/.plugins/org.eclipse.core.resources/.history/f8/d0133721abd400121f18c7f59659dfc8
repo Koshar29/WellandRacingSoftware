@@ -1,0 +1,156 @@
+package net.matthewauld.racetrack.server;
+
+import java.lang.reflect.Array;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+public class WrSQL {
+	private Connection con = null;
+	private Statement st = null;
+	private ResultSet rs = null;
+	private PreparedStatement ps = null;
+
+	private String url = "jdbc:mysql://127.0.0.1:3306/racetrack2013";
+	private String user = "root";
+	private String password = "";
+
+	public WrSQL() {
+
+	}
+
+	public void connect() throws SQLException {
+		con = DriverManager.getConnection(url, user, password);
+	}
+
+	@SuppressWarnings("unchecked")
+	public String getJSONClassSpecificRiders(String query) throws SQLException {
+		connect();
+		st = con.createStatement();
+		rs = st.executeQuery(query);
+
+		JSONObject json = new JSONObject();
+		JSONArray riders = new JSONArray();
+		while (rs.next()) {
+			JSONObject classJSON = new JSONObject();
+			classJSON.put("name", fetchRiderName(rs.getInt("rid")));
+			classJSON.put("rid", rs.getInt("rid"));
+			classJSON.put("cid", rs.getInt("cid"));
+			riders.add(classJSON);
+		}
+		Object[] unsortedArray = riders.toArray();
+		for(Object o:unsortedArray){
+			System.out.println(o.toString());
+		}
+		Arrays.sort(unsortedArray);
+		System.out.println("After: ");
+		for(Object o:unsortedArray){
+			System.out.println(o.toString());
+		}
+		if (riders.size() == 0) {
+			json.put("riders", null);
+		} else {
+			json.put("riders", riders);
+		}
+
+		return json.toJSONString();
+	}
+
+	private String fetchRiderName(int rid) throws SQLException {
+		PreparedStatement ps = con.prepareStatement("SELECT first_name,last_name FROM riders WHERE id = ?");
+		ps.setInt(1, rid);
+
+		ResultSet rs = ps.executeQuery();
+		String riderName = "";
+		if (rs.next()) {
+			riderName = rs.getString("first_name") + " " + rs.getString("last_name");
+		}
+		return riderName;
+
+	}
+
+	@SuppressWarnings("unchecked")
+	public String getJSONClasses(String query) throws SQLException {
+		connect();
+		st = con.createStatement();
+		rs = st.executeQuery(query);
+
+		JSONObject json = new JSONObject();
+		JSONArray classes = new JSONArray();
+		while (rs.next()) {
+			JSONObject classJSON = new JSONObject();
+			classJSON.put("id", rs.getInt("id"));
+			classJSON.put("title", rs.getString("title"));
+			classes.add(classJSON);
+		}
+
+		if (classes.size() == 0) {
+			json.put("classes", null);
+		} else {
+			json.put("classes", classes);
+		}
+
+		return json.toJSONString();
+	}
+
+	@SuppressWarnings("unchecked")
+	public String getJSONString(String query, String[] args) throws SQLException {
+		connect();
+		ps = con.prepareStatement(query);
+		for (int i = 0; i < args.length; i++) {
+			ps.setString(i + 1, args[i]);
+		}
+
+		rs = ps.executeQuery();
+		JSONObject json = new JSONObject();
+		JSONArray riders = new JSONArray();
+		while (rs.next()) {
+			JSONObject riderJSON = new JSONObject();
+			riderJSON.put("id", rs.getInt("id"));
+			riderJSON.put("first_name", rs.getString("first_name"));
+			riderJSON.put("last_name", rs.getString("last_name"));
+			riders.add(riderJSON);
+		}
+		if (riders.size() == 0) {
+			json.put("riders", null);
+		} else {
+			json.put("riders", riders);
+		}
+
+		return json.toJSONString();
+	}
+
+	public String fetchQuery(String query) {
+		try {
+			connect();
+			st = con.createStatement();
+			rs = st.executeQuery(query);
+			if (rs.next()) {
+
+				return rs.getString(1);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public void disconnect() {
+		try {
+			st.close();
+			rs.close();
+			con.close();
+		} catch (Exception e) {
+			// Nothing To See Here
+		}
+	}
+
+}

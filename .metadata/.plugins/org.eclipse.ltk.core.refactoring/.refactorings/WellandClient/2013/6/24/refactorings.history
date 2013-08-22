@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Move 2 elements to &apos;WellandControls/src/net.matthewauld.controls&apos;&#x0D;&#x0A;- Original project: &apos;WellandClient&apos;&#x0D;&#x0A;- Destination element: &apos;WellandControls/src/net.matthewauld.controls&apos;&#x0D;&#x0A;- Original elements:&#x0D;&#x0A;     com.wcmc.Software.ClassesContainer.java&#x0D;&#x0A;     com.wcmc.Software.ClassItem.java&#x0D;&#x0A;- Update references to refactored element" description="Move compilation units" destination="=WellandControls/src&lt;net.matthewauld.controls" element1="/src&lt;com.wcmc.Software{ClassesContainer.java" element2="/src&lt;com.wcmc.Software{ClassItem.java" files="0" flags="589830" folders="0" id="org.eclipse.jdt.ui.move" patterns="*" policy="org.eclipse.jdt.ui.moveResources" qualified="false" references="true" stamp="1370892802446" units="2" version="1.0"/>
+</session>
